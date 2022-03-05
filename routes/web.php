@@ -16,3 +16,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('test/blockchain/factorymethod', function() {
+    App::call(\App\Services\BlockChain\BlockChainService::class . "@createAddress", ['type' => 'trc20_address']);
+});

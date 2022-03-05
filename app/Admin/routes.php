@@ -14,4 +14,10 @@ Route::group([
     $router->get('/', 'HomeController@index')->name('home');
 
     $router->resource('admin-users', AdminUserController::class);
+
+    $router->resource('exchange-address-types', ExchangeAddressTypeController::class);
+
+    $router->resource('smart-contracts', SmartContractController::class);
+
+    $router->resource('env-settings', EnvSettingController::class);
 });
