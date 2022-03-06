@@ -18,7 +18,7 @@ class CreateWalletAddressesTable extends Migration
             $table->timestamps();
             $table->unsignedInteger('address_type_id');
             $table->string('address');
-            $table->string('private_key')->nullable();
+            $table->text('private_key')->nullable();
         });
     }
 

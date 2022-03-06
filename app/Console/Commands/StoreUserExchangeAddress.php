@@ -51,8 +51,10 @@ class StoreUserExchangeAddress extends Command
 
             DB::beginTransaction();
 
-            $result = App::call(AdminUserService::class . '@createUserExchangeAddress', ['user' => $user]);
-            dd($result);
+            $add_count = App::call(AdminUserService::class . '@createUserExchangeAddress', ['user' => $user]);
+            if ($add_count <= 0) {
+                throw new Exception("未新增錢包地址");
+            }
 
             DB::commit();
 

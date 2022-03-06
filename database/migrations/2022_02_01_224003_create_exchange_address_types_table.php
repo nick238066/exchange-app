@@ -17,6 +17,7 @@ class CreateExchangeAddressTypesTable extends Migration
             $table->id();
             $table->timestamps();
             $table->softDeletes();
+            $table->unsignedInteger('env_setting_id');
             $table->string('name');
             $table->string('short_name');
             $table->string('code');

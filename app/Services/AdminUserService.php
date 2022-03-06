@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Crypt;
 use App\Models\ExchangeAddressType;
 use App\Repositories\ExchangeAddressTypeRepository;
 use App\Repositories\MemberAddressRepository;
@@ -12,6 +13,7 @@ class AdminUserService
 {
     public function createUserExchangeAddress($user)
     {
+        $add_count = 0;
         // $active_chains = Arr::except(ExchangeAddressType::ADDRESS_TYPES, [ExchangeAddressType::TYPES_OMNI]);
         $active_chains = Arr::only(ExchangeAddressType::ADDRESS_TYPES, [ExchangeAddressType::TYPES_TRC20]);
         if (count($active_chains) > 0) {
@@ -35,9 +37,23 @@ class AdminUserService
                 }
 
                 // 新增錢包地址
-                $address_info = $blockChainService->createAddress($code, $user);
+                $account_info = $blockChainService->createAccount($code, $user);
+                if (isset($account_info['address']) && empty($account_info['address'])) {
+                    continue;
+                }
+
+                // 新增區塊練地址
+                $account_info['private_key'] = isset($account_info['private_key']) ? Crypt::encryptString($account_info['private_key']) : null;
+                $wallet_address = $address_type->wallet_addresses()->create($account_info);
+
+                // 新增會員與區塊練地址紀錄
+                $member_info = ['user_id' => $user->id, 'address_type_id' => $wallet_address->id];
+                $member_address = $wallet_address->member_address()->create($member_info);
+
+                $add_count++;
             }
-            dd($active_chains);
         }
+
+        return $add_count;
     }
 }

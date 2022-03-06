@@ -16,4 +16,14 @@ class ExchangeAddressType extends Model
         self::TYPES_ERC20 => 'ETH-ERC20',
         self::TYPES_TRC20 => 'TRX-TRC20',
     ];
+
+    public function env_setting()
+    {
+        return $this->belongsTo(EnvSetting::class);
+    }
+
+    public function wallet_addresses()
+    {
+        return $this->hasMany(WalletAddress::class, 'address_type_id', 'id');
+    }
 }

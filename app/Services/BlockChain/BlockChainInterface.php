@@ -4,5 +4,5 @@ namespace App\Services\BlockChain;
 
 interface BlockChainInterface
 {
-    public function createAddress($user);
+    public function createAccount($code, $user);
 }
