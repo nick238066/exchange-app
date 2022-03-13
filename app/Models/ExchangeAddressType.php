@@ -26,4 +26,9 @@ class ExchangeAddressType extends Model
     {
         return $this->hasMany(WalletAddress::class, 'address_type_id', 'id');
     }
+
+    public function smart_contracts()
+    {
+        return $this->hasMany(SmartContract::class, 'address_type_id', 'id');
+    }
 }

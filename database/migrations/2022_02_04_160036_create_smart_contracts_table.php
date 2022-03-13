@@ -19,6 +19,7 @@ class CreateSmartContractsTable extends Migration
             $table->softDeletes();
             $table->unsignedInteger('env_setting_id');
             $table->unsignedInteger('address_type_id');
+            $table->unsignedInteger('currency_id');
             $table->string('name');
             $table->string('short_name');
             $table->string('token');

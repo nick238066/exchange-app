@@ -5,25 +5,25 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\App;
-use App\Models\AdminUser;
-use App\Services\AdminUserService;
 use Exception;
+use App\Models\WalletAddress;
+use App\Services\WalletAddressService;
 
-class StoreUserExchangeAddress extends Command
+class GetExchangeWalletBalance extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'command:storeUserExchangeAddress {user_id : 使用者ID}';
+    protected $signature = 'command:getExchangeWalletBalance {id : Exchange Wallet Id} {--contract_token= : 合約地址}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = '建立使用者交易所錢包地址';
+    protected $description = '取得錢包地址餘額或合約餘額';
 
     /**
      * Create a new command instance.
@@ -43,17 +43,15 @@ class StoreUserExchangeAddress extends Command
     public function handle()
     {
         try {
-            $userId = $this->argument('user_id');
-            $user = AdminUser::find($userId);
-            if (!$user) {
-                throw new Exception("使用者不存在");
-            }
+            $address = WalletAddress::find($this->argument('id'));
+
+            $contract_token = $this->option('contract_token');
 
             DB::beginTransaction();
 
-            $add_count = App::call(AdminUserService::class . '@createUserExchangeAddress', ['user' => $user]);
-            if ($add_count <= 0) {
-                throw new Exception("未新增錢包地址");
+            $result = App::call(WalletAddressService::class . '@getExchangeWalletBalance', ['address' => $address, 'contract_token' => $this->option('contract_token')]);
+            if ($result['status'] == 'fail') {
+                throw new Exception("錢包地址餘額查詢失敗");
             }
 
             DB::commit();

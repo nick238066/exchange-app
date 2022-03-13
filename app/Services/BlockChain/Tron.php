@@ -6,9 +6,25 @@ use GuzzleHttp\Client;
 use App\Repositories\ExchangeAddressTypeRepository;
 use Exception;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Arr;
+use App\Services\Sdk\TronSdk;
 
 class Tron implements BlockChainInterface
 {
+    protected $address_type;
+    protected $env_setting;
+
+    public function setAddressType($code)
+    {
+        // 取得錢包地址類型
+        $exchangeAddressTypeRepo = new ExchangeAddressTypeRepository;
+        $this->address_type = $exchangeAddressTypeRepo->getExchangeAddressTypeByCode($code);
+
+        // 取得環境值
+        $this->env_setting = $this->address_type->env_setting;
+    }
+
     public function createAccount($code, $user)
     {
         // 取得錢包地址類型
@@ -38,6 +54,74 @@ class Tron implements BlockChainInterface
         }
 
         return false;
+    }
+
+    public function getBalance($code, $address, $contract_token = null)
+    {
+        // 取得錢包地址類型
+        $this->setAddressType($code);
+
+        if ($this->env_setting) {
+            $domain = $this->env_setting->domain;
+
+            if ($contract_token == '-') {
+                $url = $domain . "/wallet/getaccount";
+
+                $params = [
+                    'address' => $address,
+                    'visible' => true,
+                ];
+            } else {
+                $url = $domain . "/wallet/triggerconstantcontract";
+
+                $encodeParams = [
+                    'address' => str_pad(App::call(TronSdk::class . '@base58check2HexString', ['str' => $address]), 64, "0", STR_PAD_LEFT),
+                ];
+
+                $params = [
+                    'contract_address' => $contract_token,
+                    'function_selector' => 'balanceOf(address)',            
+                    'parameter' => $encodeParams['address'],
+                    'owner_address' => $address,
+                    'visible' => true,
+                ];
+            }
+            
+            $result = $this->call($params, $url);
+
+            return $result;
+        }
+
+        throw new Exception("查無錢包地址環境設定");
+    }
+
+    public function getAmount($value, $decimals, $convert=false)
+    {
+        if ($convert) {
+            $value = base_convert($value, 16, 10);
+        }
+        return $value/pow(10, $decimals);
+    }
+
+    public function getConvertBalanceResult($balance_result, $contract_token, $decimals, $convert=false)
+    {
+        if ($contract_token == '-') {
+            $value = Arr::get($balance_result, 'balance', false);
+            if (!$value) {
+                throw new Exception("查無錢包地址合約餘額");
+            }
+            $convert = false; // 不轉換
+        } else {
+            $value = Arr::get($balance_result, 'result', false);
+            if (is_array($value) && (isset($value['result']) && $value['result'] == true)) {
+                $value = App::call(TronSdk::class . '@getAbiDecode', ['param' => $balance_result['constant_result'][0], 'type' => 'balanceOf']);
+                $value = $value[0]->toHex();
+            } else {
+                throw new Exception("查無錢包地址合約餘額");
+            }
+        }
+
+        return $this->getAmount($value, $decimals, $convert);
     }
 
     protected function call($params, $url)

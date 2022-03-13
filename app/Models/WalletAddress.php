@@ -19,4 +19,9 @@ class WalletAddress extends Model
     {
         return $this->hasOne(MemberAddress::class, 'address_id', 'id');
     }
+
+    public function address_type()
+    {
+        return $this->belongsTo(ExchangeAddressType::class, 'address_type_id', 'id');
+    }
 }
